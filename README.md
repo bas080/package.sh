@@ -20,12 +20,12 @@ Package manager for Bash and more.
 
 To make this easy you can run the following script for installation.
 
-```bash
+```bash bash
 wget -O \
   "$HOME/.local/bin/package" \
-  'https://raw.githubusercontent.com/bas080/package-sh/master/package-sh'
+  'https://raw.githubusercontent.com/bas080/package.sh/master/bin/package'
 chmod +x "$HOME/.local/bin/package"
-grep -F 'source <(package sourced)' "$HOME/.bashrc" ||
+grep -q -F 'source <(package sourced)' "$HOME/.bashrc" ||
   echo 'source <(package sourced)' >> "$HOME/.bashrc"
 ```
 
@@ -78,7 +78,7 @@ source bash-log
 log_error "oops"
 ```
 ```
-2021-09-28T16:09:17+02:00[1] oops
+2021-09-28T16:13:03+02:00[1] oops
 ```
 
 ### Executable
