@@ -78,7 +78,7 @@ source bash-log
 log_error "oops"
 ```
 ```
-2021-09-28T16:13:03+02:00[1] oops
+2021-09-28T16:24:17+02:00[1] oops
 ```
 
 ### Executable
@@ -146,6 +146,15 @@ in the project directory.
 
 ```bash bash 2>&1
 package install
+```
+```
+[package] fetched sourceable https://raw.githubusercontent.com/bas080/bash-tap/master/bash-tap with alias bash-tap
+[package] fetched executable https://raw.githubusercontent.com/bas080/mache/master/mache with alias mache
+[package] fetched executable https://raw.githubusercontent.com/bas080/markatzea/master/markatzea with alias markatzea
+[package] linked /home/women/projects/bashionista/bashionista with alias bashionista
+[package] linked /home/women/projects/package/package with alias package
+[package] removing old install
+[package] install was a success
 ```
 
 We also need to source a script in order to have the correct directory in the
