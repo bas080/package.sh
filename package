@@ -77,6 +77,10 @@ function package_flatten ()
     {
         printf 'executable "%s" "%s"\n' "$1" "$2"
     };
+    function installed()
+    {
+        printf 'installed "%s"\n' "$1"
+    };
     # shellcheck source=./package.sh
     source "$(package_file "$@")"
 };
