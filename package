@@ -1,0 +1,156 @@
+#!/usr/bin/env bashionista
+
+function parent_find() {
+  local file="$1"
+  local dir="$2"
+  test -e "$dir/$file" && echo "$dir" && return 0
+  [ '/' = "$dir" ] && return 1
+  "${FUNCNAME[0]}" "$file" "$(dirname "$dir")"
+}
+
+function log() {
+  echo "[package] $1" 1>&2
+}
+
+DIR="$(parent_find 'package.sh' "$PWD")" || {
+    log "not able to find package.sh file"
+    exit 1
+}
+
+cd "$DIR"
+mkdir -p '.package'
+
+function noop ()
+{
+    true
+};
+function installed()
+{
+    noop
+};
+function linked ()
+{
+    noop
+};
+function sourced ()
+{
+    noop
+};
+function sourceable ()
+{
+    noop
+};
+function executable ()
+{
+    noop
+};
+function package ()
+{
+    noop
+};
+function package_cat ()
+{
+    wget -q "$1" -O - || cat "$1";
+};
+function package_cache ()
+{
+    local f
+    f=".package/$(package_hash "$1")";
+    [[ -f "$f" ]] || return 1;
+    cat "$f";
+};
+function package_flatten ()
+{
+    function package ()
+    {
+        package_flatten <(package_cat "$1")
+    };
+    function linked ()
+    {
+        printf 'linked "%s" "%s"\n' "$1" "$2"
+    };
+    function sourced ()
+    {
+        printf 'sourced "%s"\n' "$1"
+    };
+    function executable ()
+    {
+        printf 'executable "%s" "%s"\n' "$1" "$2"
+    };
+    # shellcheck source=./package.sh
+    source "$(package_file "$@")"
+};
+function package_ls ()
+{
+    package_flatten "$@";
+};
+function package_install ()
+{
+    function linked ()
+    {
+        ln -s "$2" ".package/$1"
+        log "linked $2 with alias $1"
+    };
+    function executable ()
+    {
+        local file_path=".package/$1";
+        package_cat "$2" > "$file_path";
+        chmod +x "$file_path"
+        log "fetched executable $2 with alias $1"
+    };
+    function sourced ()
+    {
+        package_cat "$1" > ".package/$(package_hash "$1")"
+        log "fetched sourced $1"
+    };
+    function sourceable ()
+    {
+        package_cat "$2" > ".package/$1"
+        log "fetched sourceable $2 with alias $1"
+    };
+    function installed ()
+    {
+        local tmp
+        tmp="$(mktemp)"
+        package_cat "$1" > "$tmp"
+        chmod +x "$tmp"
+        "$tmp" || {
+            rm "$tmp"
+            return 1
+        }
+        rm "$tmp"
+    };
+    mv .package .package.bak;
+    mkdir -p ".package";
+    package_flatten "$@" | source /dev/stdin || {
+        log "reverting to previous install"
+        rm -r .package;
+        mv .package.bak .package;
+        log "aborting install"
+        return 1
+    };
+    log "removing old install"
+    rm -r .package.bak;
+    log "install was a success"
+};
+function package_hash ()
+{
+    local array=($(sha1sum <<< "$1"));
+    echo "${array[0]}"
+};
+function package_sourced ()
+{
+    function sourced ()
+    {
+        package_cache "$1" || {
+            package_cat "$1" | tee ".package/$(package_hash "$1")"
+        }
+    };
+    mkdir -p ".package";
+    echo "export PATH=\"$PWD/.package:$PATH\"";
+    package_flatten "$@" | source /dev/stdin
+};
+function package_file ()
+{
+    echo "${1:-./package.sh}"
+}
