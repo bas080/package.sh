@@ -78,7 +78,7 @@ source bash-log
 log_error "oops"
 ```
 ```
-2021-09-28T16:24:17+02:00[1] oops
+2021-09-28T23:27:52+02:00[1] oops
 ```
 
 ### Executable
@@ -155,6 +155,7 @@ package install
 [package] linked /home/women/projects/package/package with alias package
 [package] removing old install
 [package] install was a success
+source <(package sourced)
 ```
 
 We also need to source a script in order to have the correct directory in the

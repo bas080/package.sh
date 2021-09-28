@@ -50,7 +50,7 @@ function package ()
 };
 function package_cat ()
 {
-    wget -q "$1" -O - || cat "$1";
+    cat "$1" 2> /dev/null || wget -q "$1" -O -
 };
 function package_cache ()
 {
@@ -123,6 +123,7 @@ function package_install ()
             return 1
         }
         rm "$tmp"
+        log "installed $1"
     };
     mv .package .package.bak;
     mkdir -p ".package";
@@ -136,6 +137,7 @@ function package_install ()
     log "removing old install"
     rm -r .package.bak;
     log "install was a success"
+    echo 'source <(package sourced)'
 };
 function package_hash ()
 {
@@ -146,9 +148,7 @@ function package_sourced ()
 {
     function sourced ()
     {
-        package_cache "$1" || {
-            package_cat "$1" | tee ".package/$(package_hash "$1")"
-        }
+        package_cache "$1"
     };
     mkdir -p ".package";
     echo "export PATH=\"$PWD/.package:$PATH\"";
