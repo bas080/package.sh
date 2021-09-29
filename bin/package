@@ -61,6 +61,13 @@ function package_cache ()
     [[ -f "$f" ]] || return 1;
     cat "$f";
 };
+function template ()
+{
+    local fn_name;
+    printf '%s' "$1"; shift
+    printf " '%s'" "$@"
+    printf '\n'
+};
 function package_flatten ()
 {
     function package ()
@@ -69,19 +76,19 @@ function package_flatten ()
     };
     function linked ()
     {
-        printf 'linked "%s" "%s"\n' "$1" "$2"
+        template "${FUNCNAME[0]}" "$@"
     };
     function sourced ()
     {
-        printf 'sourced "%s"\n' "$1"
+        template "${FUNCNAME[0]}" "$@"
     };
     function executable ()
     {
-        printf 'executable "%s" "%s"\n' "$1" "$2"
+        template "${FUNCNAME[0]}" "$@"
     };
     function installed()
     {
-        printf 'installed "%s"\n' "$1"
+        template "${FUNCNAME[0]}" "$@"
     };
     # shellcheck source=./package.sh
     source "$(package_file "$@")"

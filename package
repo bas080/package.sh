@@ -50,7 +50,7 @@ function package ()
 };
 function package_cat ()
 {
-    cat "$1" 2> /dev/null || wget -q "$1" -O -
+    wget -q "$1" -O - || cat "$1"
 };
 function package_cache ()
 {
@@ -58,6 +58,13 @@ function package_cache ()
     f=".package/$(package_hash "$1")";
     [[ -f "$f" ]] || return 1;
     cat "$f";
+};
+function template ()
+{
+    local fn_name;
+    printf '%s' "$1"; shift
+    printf " '%s'" "$@"
+    printf '\n'
 };
 function package_flatten ()
 {
@@ -67,19 +74,27 @@ function package_flatten ()
     };
     function linked ()
     {
-        printf 'linked "%s" "%s"\n' "$1" "$2"
+        template "${FUNCNAME[0]}" "$@"
     };
     function sourced ()
     {
-        printf 'sourced "%s"\n' "$1"
+        test "$#" -ne 0 || {
+          printf $'sourced <<< \'%s\'\n' "$(cat -)"
+          return
+        }
+        template "${FUNCNAME[0]}" "$@"
     };
     function executable ()
     {
-        printf 'executable "%s" "%s"\n' "$1" "$2"
+        template "${FUNCNAME[0]}" "$@"
     };
     function installed()
     {
-        printf 'installed "%s"\n' "$1"
+        template "${FUNCNAME[0]}" "$@"
+    };
+    function sourceable ()
+    {
+        template "${FUNCNAME[0]}" "$@"
     };
     # shellcheck source=./package.sh
     source "$(package_file "$@")"
@@ -90,26 +105,36 @@ function package_ls ()
 };
 function package_install ()
 {
+    local bin
     function linked ()
     {
-        ln -s "$2" ".package/$1"
+        ! test -f "$PWD/.package_install/$1" || return 0
+        test "$#" -ne 1 || {
+          bin="$(readlink -f "$(which "$1")")"
+          ln -s "$bin" "$PWD/.package_install/$1"
+          log "linked $bin with alias $1"
+          return
+        }
+        ln -s "$2" "$PWD/.package_install/$1"
         log "linked $2 with alias $1"
     };
     function executable ()
     {
-        local file_path=".package/$1";
+        local file_path=".package_install/$1";
         package_cat "$2" > "$file_path";
         chmod +x "$file_path"
         log "fetched executable $2 with alias $1"
     };
     function sourced ()
     {
-        package_cat "$1" > ".package/$(package_hash "$1")"
+        test "$#" -ne 0 || return 0
+
+        package_cat "$1" > ".package_install/$(package_hash "$1")"
         log "fetched sourced $1"
     };
     function sourceable ()
     {
-        package_cat "$2" > ".package/$1"
+        package_cat "$2" > ".package_install/$1"
         log "fetched sourceable $2 with alias $1"
     };
     function installed ()
@@ -125,19 +150,19 @@ function package_install ()
         rm "$tmp"
         log "installed $1"
     };
-    mv .package .package.bak;
-    mkdir -p ".package";
-    package_flatten "$@" | source /dev/stdin || {
-        log "reverting to previous install"
-        rm -r .package;
-        mv .package.bak .package;
-        log "aborting install"
-        return 1
-    };
-    log "removing old install"
-    rm -r .package.bak;
-    log "install was a success"
-    echo 'source <(package sourced)'
+    [[ -e .package_install ]] && rm -r .package_install # Cleanup
+    {
+        mkdir -p ".package_install";
+        package_flatten "$@" | source /dev/stdin || {
+            log "reverting to previous install"
+            log "aborting install"
+            return 1
+        };
+        log "removing old install"
+        rm -r .package
+        mv .package_install .package
+        log "install was a success"
+    } >&2
 };
 function package_hash ()
 {
@@ -148,13 +173,22 @@ function package_sourced ()
 {
     function sourced ()
     {
+        test "$#" -ne 0 || {
+            cat -;
+            return
+        };
         package_cache "$1"
     };
     mkdir -p ".package";
-    echo "export PATH=\"$PWD/.package:$PATH\"";
+    echo "export PATH=\".package:$PWD/.package:$PATH\"";
     package_flatten "$@" | source /dev/stdin
 };
 function package_file ()
 {
     echo "${1:-./package.sh}"
+};
+function package_run ()
+{
+    export PATH=".package"
+    $@
 }

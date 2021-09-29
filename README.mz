@@ -48,7 +48,7 @@ Let's see how you could install [NVM][1].
 NVM offers their functionality by sourcing the nvm script in a bash process. To
 do this we use the sourced function(ality).
 
-```sh
+```bash
 sourced https://raw.githubusercontent.com/creationix/nvm/v0.33.11/nvm.sh
 sourced https://raw.githubusercontent.com/creationix/nvm/v0.33.11/bash_completion
 ```
@@ -74,6 +74,10 @@ sourceable bash-log https://raw.githubusercontent.com/bas080/logger/master/logge
 
 ```bash bash 2>&1
 source bash-log
+
+logger_date() {
+  echo '<date>'
+}
 
 log_error "oops"
 ```
