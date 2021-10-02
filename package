@@ -24,6 +24,10 @@ function noop ()
 {
     true
 };
+function version ()
+{
+    noop
+};
 function installed()
 {
     noop
@@ -191,4 +195,12 @@ function package_run ()
 {
     export PATH=".package"
     $@
+}
+function package_version ()
+{
+    version()
+    {
+      echo "$1"
+    };
+    source "$(package_file "$@")"
 }

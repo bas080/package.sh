@@ -1,0 +1,4 @@
+installed https://cdn.deno.land/install/versions/v0.1.4/raw/install.sh
+
+sourced <<< 'export DENO_INSTALL="/home/women/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"'
