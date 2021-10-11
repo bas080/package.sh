@@ -189,7 +189,7 @@ function package_sourced ()
 };
 function package_file ()
 {
-    echo "${1:-./package.sh}"
+    echo "${1:-package.sh}"
 };
 function package_run ()
 {
@@ -198,9 +198,17 @@ function package_run ()
 }
 function package_version ()
 {
+    local called=0;
+
     version()
     {
+      called=1
       echo "$1"
     };
+
     source "$(package_file "$@")"
+    [[ "$called" -eq 1  ]] || {
+      log "version not defined in $DIR/$(package_file "$@")"
+      return 1
+    }
 }
